@@ -132,11 +132,17 @@ impl CompressionUtils {
         body: Body<'r>,
         encoding: CachedEncoding,
     ) -> std::io::Result<Vec<u8>> {
+        #[cfg(feature = "fastest")]
+        let level = async_compression::Level::Fastest;
+
+        #[cfg(feature = "highest")]
+        let level = async_compression::Level::Best;
+
         match encoding {
             CachedEncoding::Brotli => {
                 let mut compressor = async_compression::tokio::bufread::BrotliEncoder::with_quality(
                     rocket::tokio::io::BufReader::new(body),
-                    async_compression::Level::Best,
+                    level,
                 );
                 let mut out = Vec::new();
                 rocket::tokio::io::copy(&mut compressor, &mut out).await?;
@@ -145,7 +151,7 @@ impl CompressionUtils {
             CachedEncoding::Gzip => {
                 let mut compressor = async_compression::tokio::bufread::GzipEncoder::with_quality(
                     rocket::tokio::io::BufReader::new(body),
-                    async_compression::Level::Best,
+                    level,
                 );
                 let mut out = Vec::new();
                 rocket::tokio::io::copy(&mut compressor, &mut out).await?;
