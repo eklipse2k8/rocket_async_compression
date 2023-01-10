@@ -177,18 +177,24 @@ impl CompressionUtils {
 
         let body = response.body_mut().take();
 
+        #[cfg(feature = "fastest")]
+        let level = async_compression::Level::Fastest;
+
+        #[cfg(feature = "highest")]
+        let level = async_compression::Level::Best;
+
         // Compression is done when the request accepts brotli or gzip encoding
         if accepts_br {
             let compressor = async_compression::tokio::bufread::BrotliEncoder::with_quality(
                 rocket::tokio::io::BufReader::new(body),
-                async_compression::Level::Best,
+                level,
             );
 
             CompressionUtils::set_body_and_encoding(response, compressor, Encoding::Brotli);
         } else if accepts_gzip {
             let compressor = async_compression::tokio::bufread::GzipEncoder::with_quality(
                 rocket::tokio::io::BufReader::new(body),
-                async_compression::Level::Best,
+                level,
             );
 
             CompressionUtils::set_body_and_encoding(response, compressor, Encoding::Gzip);
